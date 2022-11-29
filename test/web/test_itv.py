@@ -16,7 +16,7 @@ from unittest.mock import patch
 
 import typing
 
-from resources.lib import itv, fetch, itv_account
+from resources.lib import itvx, itv, fetch, itv_account
 from codequick import Listitem, Route, Script
 
 
