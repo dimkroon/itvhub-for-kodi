@@ -148,6 +148,48 @@ cached_programs = {}
 CACHE_TIME = 600
 
 
+def get_episodes(program_id):
+    result = fetch.get_json(
+        'https://content-inventory.prd.oasvc.itv.com/discovery',
+        params={
+            'operationName': 'EpisodePage',
+            'query': 'query EpisodePage($broadcaster: Broadcaster, $brandLegacyId: BrandLegacyId, $features: [Feature!]'
+                     ') { brands(filter: {legacyId: $brandLegacyId,tiers: ["FREE", "PAID"]}) { __typename title tier '
+                     'imageUrl(imageType: ITVX) synopses { __typename ninety } earliestAvailableTitle { __typename '
+                     'ccid } latestAvailableTitle { __typename ccid } series(sortBy: SEQUENCE_ASC) { __typename '
+                     'seriesNumber } channel { __typename name } } titles(filter: {brandLegacyId: $brandLegacyId, '
+                     'broadcaster: $broadcaster, available: "NOW", platform: MOBILE, features: $features, tiers: '
+                     '["FREE", "PAID"]}, sortBy: SEQUENCE_ASC) { __typename ...TitleFields } } fragment TitleFields on '
+                     'Title { __typename titleType ccid legacyId brandLegacyId title brand { __typename title ccid '
+                     'legacyId synopses { __typename ninety } tier latestAvailableEpisode { __typename ccid title } '
+                     'genres(filter: {hubCategory: true}) { __typename name } channel { __typename name } '
+                     'earliestAvailableSeries { __typename seriesNumber } latestAvailableSeries { __typename '
+                     'seriesNumber } numberOfAvailableSeries } merchandisingTags { __typename id } nextAvailableTitle '
+                     '{ __typename ccid legacyId latestAvailableVersion { __typename legacyId } } channel { __typename '
+                     'name strapline } broadcastDateTime synopses { __typename ninety } imageUrl(imageType: ITVX) '
+                     'regionalisation latestAvailableVersion { __typename legacyId duration playlistUrl duration '
+                     'compliance { __typename displayableGuidance } availability { __typename downloadable end start '
+                     'maxResolution adRule } ...VariantsFields linearContent visuallySigned duration scheduleEvent { '
+                     '__typename broadcastDateTime originalBroadcastDateTime } } contentOwner partnership ... on '
+                     'Episode { ...EpisodeInfo } ... on Film { ...FilmInfo } ... on Special { ...SpecialInfo } } '
+                     'fragment VariantsFields on Version { __typename variants(filter: {features: $features}) { '
+                     '__typename features variantId platform } } fragment EpisodeInfo on Episode { __typename series { '
+                     '__typename ...SeriesInfo } episodeNumber tier } fragment SeriesInfo on Series { __typename '
+                     'longRunning fullSeries seriesNumber numberOfAvailableEpisodes } fragment FilmInfo on Title { '
+                     '__typename ... on Film { title tier imageUrl(imageType: ITVX) synopses { __typename ninety } '
+                     'categories genres { __typename id name hubCategory } } } fragment SpecialInfo on Special { '
+                     '__typename title tier imageUrl(imageType: ITVX) synopses { __typename ninety thousand } '
+                     'categories genres { __typename id name hubCategory } }',
+            'variables': '{"broadcaster":"UNKNOWN","brandLegacyId":"%s","features":["HD","PROGRESSIVE",'
+                     '"SINGLE_TRACK","MPEG_DASH","WIDEVINE","WIDEVINE_DOWNLOAD","INBAND_TTML","HLS","AES",'
+                     '"INBAND_WEBVTT","OUTBAND_WEBVTT","INBAND_AUDIO_DESCRIPTION"]}' % program_id
+        }
+    )
+    from test.support.testutils import save_json
+    save_json(result, 'episodes/frost.json')
+    return result['data']['titles']
+
+
 def get_playlist_url_from_episode_page(page_url):
     """Obtain the url to the episode's playlist from the episode's HTML page.
     """

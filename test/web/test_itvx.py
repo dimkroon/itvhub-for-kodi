@@ -73,3 +73,9 @@ class TestItvX(unittest.TestCase):
         rl, name = itvx.get_playlist_url_from_episode_page(episode_url)
         self.assertEqual('', name)
         self.assertTrue(url.startswith('https://'))
+
+
+class Episodes(unittest.TestCase):
+    def test_get_episodes_frost(self):
+        result = itvx.get_episodes('Y/1774')
+        self.assertGreater(len(result), 30)
