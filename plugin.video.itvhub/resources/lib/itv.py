@@ -142,11 +142,12 @@ def get_live_urls(channel, url=None, title=None, start_time=None, play_from_star
 
     """
     # import web_pdb; web_pdb.set_trace()
+    from . import itvx
 
     if url is None:
         url = 'https://simulcast.itv.com/playlist/itvonline/' + channel
 
-    stream_data = _request_stream_data(url)
+    stream_data = itvx._request_stream_data(url)
     video_locations = stream_data['Playlist']['Video']['VideoLocations'][0]
     dash_url = video_locations['Url']
     start_again_url = video_locations.get('StartAgainUrl')
@@ -168,7 +169,8 @@ def get_catchup_urls(episode_url):
     """Return the urls to the dash stream, key service and subtitles for a particular catchup episode.
     """
     # import web_pdb; web_pdb.set_trace()
-    stream_data = _request_stream_data(episode_url, 'catchup')['Playlist']['Video']
+    from resources.lib import itvx
+    stream_data = itvx._request_stream_data(episode_url, 'catchup')['Playlist']['Video']
     url_base = stream_data['Base']
     video_locations = stream_data['MediaFiles'][0]
     dash_url = url_base + video_locations['Href']

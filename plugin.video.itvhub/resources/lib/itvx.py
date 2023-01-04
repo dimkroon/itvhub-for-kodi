@@ -21,6 +21,8 @@ from . import fetch, errors
 from . import parsex
 from . import utils
 from . import cache
+from . import errors
+from . import kodi_utils
 
 from .itv import get_live_schedule
 
@@ -325,3 +327,116 @@ def search(search_term, hide_paid=False):
 
     results = data.get('results')
     return (parsex.parse_search_result(result) for result in results)
+
+
+
+stream_req_data = {
+    'client': {
+        'id': 'browser',
+        'supportsAdPods': False,
+        'version': ''
+    },
+    'device': {
+        'manufacturer': 'Firefox',
+        'model': '105',
+        'os': {
+            'name': 'Linux',
+            'type': 'desktop',
+            'version': 'x86_64'
+        }
+    },
+    'user': {
+        'entitlements': [],
+        'itvUserId': '',
+        'token': ''
+    },
+    'variantAvailability': {
+        'featureset': {
+            'min': ['mpeg-dash', 'widevine'],
+            'max': ['mpeg-dash', 'widevine', 'hd']
+        },
+        'platformTag': 'ctv'
+    }
+}
+
+mobile_strm_req_data = {
+  "client": {
+    "id": "android",
+    "service": "itv.x",
+    "supportsAdPods": True,
+    "version": "0.6.0"
+  },
+  "device": {
+    "advertisingIdentifier": "00000000-0000-0000-0000-000000000000",
+    "firmware": "22",
+    "id": "xplayer",
+    "manufacturer": "",
+    "model": "",
+    "os": {
+      "name": "android",
+      "type": "android",
+      "version": "12.0"
+    }
+  },
+  "preview": False,
+  "user": {
+    "entitlements": [],
+    "itvUserId": "",
+    "status": "reg",
+    "subscribed": "false",
+    "token": ""
+  },
+  "variantAvailability": {
+    "featureset": {
+
+    },
+    "platformTag": "ctv"
+  }
+}
+
+features_live = {
+    "min": ["mpeg-dash","widevine",],
+    "max": ["hd", "mpeg-dash", "widevine", "inband-webvtt"]
+}
+
+features_catchup = {
+    "min": ["hd", "mpeg-dash", "widevine", "single-track", "outband-webvtt"],
+    "max": ["hd", "mpeg-dash", "widevine", "single-track", "outband-webvtt"]
+}
+
+
+def _request_stream_data(url, stream_type='live', retry_on_error=True):
+    from .itv_account import itv_session
+    session = itv_session()
+    stream_req_data = mobile_strm_req_data
+    try:
+        stream_req_data['user']['token'] = session.access_token
+        stream_req_data['client']['supportsAdPods'] = stream_type != 'live'
+
+        if stream_type == 'live':
+            accept_type = 'application/vnd.itv.online.playlist.sim.v3+json'
+            stream_req_data['variantAvailability']['featureset'] = features_live
+        else:
+            accept_type = 'application/vnd.itv.vod.playlist.v2+json'
+            stream_req_data['variantAvailability']['featureset'] = features_catchup
+
+        stream_data = fetch.post_json(
+            url, stream_req_data,
+            headers={'Accept': accept_type})
+
+        http_status = stream_data.get('StatusCode', 0)
+        if http_status == 401:
+            raise errors.AuthenticationError
+
+        return stream_data
+    except errors.AuthenticationError:
+        if retry_on_error:
+            if session.refresh():
+                return _request_stream_data(url, stream_type, retry_on_error=False)
+            else:
+                if kodi_utils.show_msg_not_logged_in():
+                    from xbmc import executebuiltin
+                    executebuiltin('Addon.OpenSettings({})'.format(utils.addon_info['id']))
+                return False
+        else:
+            raise

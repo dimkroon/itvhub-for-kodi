@@ -18,7 +18,8 @@ from typing import Generator
 from codequick import Route
 
 from resources.lib import itvx, errors
-from test.support.object_checks import is_url, has_keys, is_li_compatible_dict
+from test.support.object_checks import (is_url, has_keys, is_li_compatible_dict,
+                                        check_catchup_dash_stream_info, check_live_stream_info)
 
 setUpModule = fixtures.setup_web_test
 
@@ -76,3 +77,15 @@ class TestItvX(unittest.TestCase):
         # Premium episode Downton-abbey S1E1
         episode_url = "https://www.itv.com/watch/downton-abbey/1a8697/1a8697a0001"
         self.assertRaises(errors.AccessRestrictedError, itvx.get_playlist_url_from_episode_page, episode_url)
+
+    def test__request_stream_data_vod(self):
+        urls = (
+            # something else with subtitles:
+            'https://magni.itv.com/playlist/itvonline/ITV/10_0852_0001.001', )
+        for url in urls:
+            result = itvx._request_stream_data(url, 'vod')
+            check_catchup_dash_stream_info(result['Playlist'])
+
+    def test__request_stream_data_live(self):
+        result = itvx._request_stream_data('https://simulcast.itv.com/playlist/itvonline/ITV', 'live')
+        check_live_stream_info(result['Playlist'])

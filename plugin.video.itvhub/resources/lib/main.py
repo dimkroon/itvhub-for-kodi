@@ -393,7 +393,7 @@ def play_stream_live(addon, channel, url, title=None, start_time=None, play_from
 
     list_item = create_dash_stream_item(channel, manifest_url, key_service_url)  # , resume_time='43200')
     if list_item:
-        # list_item.property['inputstream.adaptive.manifest_update_parameter'] = 'full'
+        list_item.property['inputstream.adaptive.manifest_update_parameter'] = 'full'
         if start_time and start_time in manifest_url:
             # cut the first few seconds of video without audio
             list_item.property['ResumeTime'] = '8'
