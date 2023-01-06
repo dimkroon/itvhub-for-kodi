@@ -21,7 +21,8 @@ setUpModule = fixtures.setup_web_test
 
 
 def check_shows(self, show, parent_name):
-    has_keys(show, 'type', 'title', 'description', 'titleSlug', 'contentInfo', 'imageTemplate', 'encodedEpisodeId',
+    # Not always present: 'contentInfo'
+    has_keys(show, 'type', 'title', 'description', 'titleSlug', 'imageTemplate', 'encodedEpisodeId',
              'encodedProgrammeId', obj_name='{}-show-{}'.format(parent_name, show['title']))
     self.assertTrue(show['type'] in ('series', 'title', 'brand'), "{}: Unexpected title type '{}'.".format(
         '.'.join((parent_name, show['title'])), show['type']))
@@ -129,6 +130,7 @@ class CollectionPage(unittest.TestCase):
         page = fetch.get_document('https://www.itv.com/watch/collections/just-in/2RQpkypwh3w8m6738sUHQH')
         # testutils.save_doc(page, 'html/collection_just-in.html')
         data = parsex.scrape_json(page)
+        self.assertIsNotNone(data)
         # testutils.save_json(data, 'html/collection_just-in.json')
 
 
