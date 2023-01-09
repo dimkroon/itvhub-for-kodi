@@ -189,7 +189,7 @@ def web_request(method, url, headers=None, data=None, **kwargs):
         return resp
     except requests.HTTPError as e:
         # noinspection PyUnboundLocalVariable
-        logger.info("HTTP error %s for url %s: '%s'", e.response.status_code, url, resp.content)
+        logger.info("HTTP error %s for url %s: '%s'", e.response.status_code, url, resp.content[:500])
 
         if 400 <= e.response.status_code < 500:
             # noinspection PyBroadException
